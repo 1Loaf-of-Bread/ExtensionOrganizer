@@ -5,107 +5,213 @@ import os
 init(autoreset=True)
 
 
-def getPath(): # Function to get the user input for exact path, and check if the path exists.
+def getSourcePath():
     userHelp = False
     
     while True:
-        os.system("cls") # Clears the terminal.
-
-        print("Enter Exact URL of Folder.")
+        os.system("cls")
+        
+        print("~~~ Folder Path Entry ~~~")
         print()
 
         if userHelp == True:
-            print(f"{Fore.CYAN}Example: {Fore.WHITE}C:\\Users\\computer1\\Desktop\\Folder to Organize")
+            print(f"{Fore.CYAN}Example: {Fore.WHITE}C:\\Users\\computeruser1\\Desktop\\Folder to Organize")
             print()
 
-        sourcePath = input("--> ") # Gets user input.
+        sourcePath = input("Enter Exact Path of The Folder: ")
 
         
-        if os.path.isdir(sourcePath): # Checks if user input matches a directory on computer.
+        if os.path.isdir(sourcePath):
             break
         else:
+            print()
+            print(f"{Fore.RED}ERROR!: {Fore.WHITE}The Path '{sourcePath}' Does not Exist.")
+
+            sleep(1)
+
             userHelp = True
 
     print()
-    print(f"{Fore.GREEN}Folder Exists!")
+    print(f"{Fore.GREEN}Found Folder.")
     sleep(1)
+    print()
 
-    createExtensionFolders(sourcePath)
+    return sourcePath
 
 
-def createExtensionFolders(sourcePath): # Function to create extension folders for files in user input directory tree.
-    for path, dir, files in os.walk(sourcePath): # Walks through all files in the directory tree of the user input path.
+def createExtensionFolders(sourcePath):
+    destPath = f"{os.path.basename(sourcePath)}_extOrg"
+
+    if not os.path.isdir(destPath):
+        os.mkdir(destPath)
+
+    for path, dir, files in os.walk(sourcePath):
         for file in files:
             fileExt = os.path.splitext(file)[1]
 
-            if not os.path.isdir(fileExt):
-                os.makedirs(fileExt)
+            if not os.path.isdir(f"{destPath}\\{fileExt}"):
+                os.mkdir(f"{destPath}\\{fileExt}")
                 
-                if os.path.isdir(fileExt): # Checks if the extension folder exists for this extension, if not, create it.
-                    print(f"{Fore.MAGENTA}Created Folder: {Fore.WHITE}{fileExt}")
+                if os.path.isdir(f"{destPath}\\{fileExt}"):
+                    print(f"{Fore.MAGENTA}Created Folder: {Fore.WHITE}{destPath}\\{fileExt}")
                 else:
-                    print(f"{Fore.RED}ERROR!: {Fore.WHITE}Failed to Create Folder '{fileExt}'")
+                    print(f"{Fore.RED}ERROR!: {Fore.WHITE}Failed to Create Folder \"{destPath}\\{fileExt}\"")
                     print()
 
                     input("Press ENTER to Exit...")
                     exit()
 
-    moveFiles(sourcePath)
+    sleep(1)
+    print()
+
+    return
 
 
-def moveFiles(sourcePath): # Function to move files to designated extension folders.
+def extensionOrganize(sourcePath, organize):
     renameCount = 0
     failCount = 0
-    moveCount = 0
+    fileCount = 0
 
     for path, dir, files in os.walk(sourcePath):
         for file in files:
             fileName = os.path.splitext(file)[0]
             fileExt = os.path.splitext(file)[1]
             pathFile = f"{path}\\{file}"
+            folderDest = f"{os.path.basename(sourcePath)}_extOrg\\{fileExt}"
 
-            if not os.path.isfile(f"{fileExt}\\{file}"): # Checks if the file already exists in the designated extension folder, is it does, rename the file.
-                shutil.move(pathFile, fileExt)
-            
-                if os.path.isfile(f"{fileExt}\\{file}"): # Check if the file was successfully moved.
-                    print(f"{Fore.GREEN}Moved File: {Fore.WHITE}{file}")
-                    moveCount += 1
+            if file != __file__:
+                if not os.path.isfile(f"{folderDest}\\{file}"):
+                    try:
+                        if organize == "move":
+                            shutil.move(pathFile, f"{folderDest}\\{file}")
+                        else:
+                            shutil.copyfile(pathFile, f"{folderDest}\\{file}")
+                    except:
+                        pass
+                
+                    if os.path.isfile(f"{folderDest}\\{file}"):
+                        fileCount += 1
+
+                        if organize == "move":
+                            print(f"{Fore.GREEN}Moved File: {Fore.WHITE}{file}")
+                        else:
+                            print(f"{Fore.GREEN}Copied File: {Fore.WHITE}{file}")
+
+                        print(f"    {Fore.GREEN}To: {Fore.WHITE}{folderDest}")
+                    else:
+                        failCount += 1
+
+                        if organize == "move":
+                            print(f"{Fore.RED}Failed to Move File: {Fore.WHITE}{file}")
+                        else:
+                            print(f"{Fore.RED}Failed to Copy File: {Fore.WHITE}{file}")
                 else:
-                    print(f"{Fore.RED}Failed to Move File: {Fore.WHITE}{file}")
-                    failCount += 1
+                    renameCount += 1
+
+                    fileRename = f"ren{renameCount}_{fileName}{fileExt}"
+
+                    try:
+                        if organize == "move":
+                            shutil.move(pathFile, fileRename)
+                        else:
+                            shutil.copyfile(pathFile, fileRename)
+                    except:
+                        pass
+
+                    if os.path.isfile(fileRename):
+                        print(f"{Fore.YELLOW}Renamed File: {Fore.WHITE}{file}")
+                        print(f"    {Fore.YELLOW}To: {Fore.WHITE}{fileRename}")
+
+                        try:
+                            shutil.move(fileRename, f"{folderDest}\\{fileRename}")
+                        except:
+                            pass
+
+                        if os.path.isfile(f"{folderDest}\\{fileRename}"):
+                            fileCount += 1
+
+                            if organize == "move":
+                                print(f"{Fore.GREEN}Moved File: {Fore.WHITE}{fileRename}")
+                            else:
+                                print(f"{Fore.GREEN}Copied File: {Fore.WHITE}{fileRename}")
+
+                            print(f"    {Fore.GREEN}To: {Fore.WHITE}{folderDest}")
+                        else:
+                            failCount += 1
+
+                            if organize == "move":
+                                print(f"{Fore.RED}Failed to Move File: {Fore.WHITE}{fileRename}")
+                            else:
+                                print(f"{Fore.RED}Failed to Copy File: {Fore.WHITE}{fileRename}")
+
+                            os.rename(fileRename, pathFile)
+
+                            renameCount -= 1
+
+                            print(f"    {Fore.MAGENTA}Reverted Changes Made to File.")
+                    else:
+                        failCount += 1
+                        
+                        print(f"{Fore.RED}Failed to Rename File: {Fore.WHITE}{pathFile}")
+
+    return failCount, fileCount, renameCount
+
+
+if __name__ == "__main__":
+    while True:
+        os.system("cls")
+
+        print("~~~~~~~~ Main Menu ~~~~~~~~")
+        print("|                         |")
+        print("|    1. Move Files        |")
+        print("|    2. Copy Files        |")
+        print("|                         |")
+        print("|    e. Exit              |")
+        print("|                         |")
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print()
+        
+        choice = input("--> ")
+
+        if choice != "1" and choice != "2" and choice != "e":
+            print()
+            print(f"{Fore.RED}ERROR!: {Fore.WHITE}Please enter either 1, 2 or e.")
+            sleep(1)
+        else:
+            if choice == "e":
+                exit()
+
+            sourcePath = getSourcePath()
+
+            createExtensionFolders(sourcePath)
+
+            if choice == "1":
+                failCount, fileCount, renameCount = extensionOrganize(sourcePath, "move")
+
+                print()
+                print()
+                print("~~~ Folder Orginization Complete ~~~")
+                print("|                                  |")
+                print(f"|     Files Moved: {fileCount}")
+                print(f"|     Failed File Moves: {failCount}")
+                print(f"|     Files Renamed: {renameCount}")
+                print("|                                  |")
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                print()
+
+                input("Press ENTER to Continue...")
             else:
-                renameCount += 1
+                failCount, fileCount, renameCount = extensionOrganize(sourcePath, "copy")
 
-                os.rename(pathFile, f"{path}\\{fileName} ~rename{renameCount}~{fileExt}") # Rename the file.
-                shutil.move(f"{path}\\{fileName} ~rename{renameCount}~{fileExt}", fileExt) # Move the file to the designated extension folder.
-            
-                if os.path.isfile(f"{fileExt}\\{fileName} ~rename{renameCount}~{fileExt}"): # Check if the file was successfully moved.
-                    print(f"{Fore.CYAN}Renamed File '{Fore.WHITE}{file}{Fore.CYAN}' to '{Fore.WHITE}{fileName} ~rename{renameCount}~{fileExt}{Fore.CYAN}'")
-                    print(f"{Fore.GREEN}Moved File: {Fore.WHITE}{fileName} ~rename{renameCount}~{fileExt}")
+                print()
+                print()
+                print("~~~ Folder Orginization Complete ~~~")
+                print("|                                  |")
+                print(f"|     Files Copied: {fileCount}")
+                print(f"|     Failed File Copies: {failCount}")
+                print(f"|     Files Renamed: {renameCount}")
+                print("|                                  |")
+                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                print()
 
-                    moveCount += 1
-                else:
-                    print(f"{Fore.CYAN}Renamed File '{Fore.WHITE}{file}{Fore.CYAN}' to '{Fore.WHITE}{fileName} ~rename{renameCount}~{fileExt}{Fore.CYAN}'")
-                    print(f"{Fore.RED}Failed to Move File: {Fore.WHITE}{fileName} ~rename{renameCount}~{fileExt}")
-
-                    failCount += 1
-
-    complete(failCount, moveCount, renameCount)
-
-
-def complete(failCount, moveCount, renameCount):
-    os.system("cls")
-
-    print("~~~ Folder Orginization Complete ~~~")
-    print()
-    print(f"     Files Moved: {moveCount}")
-    print(f"     Failed File Moves: {failCount}")
-    print(f"     Files Renamed: {renameCount}")
-    print()
-    input("Press ENTER to Exit...")
-    
-    exit()
-
-
-
-getPath()
+                input("Press ENTER to Continue...")
