@@ -1,16 +1,18 @@
 # ExtensionOrganizer
-This program organizes a folder by file extensions. 
+This program organizes a folder and it's subdirs by file extension. 
 
-Make sure to run the command 'pip install -r requirements.txt' to install all the modules needed for NumGen to run, brefore using NumGen. 
+## Before Running:
+Make sure to run the command 'pip install -r requirements.txt' to install all the modules needed. 
 
 ## How to Use:
-When ran, you will be prompted to enter either 1 (Move), 2 (Copy), or e (Exit).
+When ran, you will see a button at the top with the text "Select Directory to Organize", when this is clicked you will be prompted to select the DIR you wish to organize.
 
-### 1.(Move):
-When 1 is typed and the enter key is pressed, you will be prompted to enter a folder path. This is asking for the exact path of the folder that you wish to organize. The files will be moved to a new folder that will be created named {the name of the folder organizing}_extensionOrganized and placed in their designated folder. The name folder being their extension: '.mp4', '.png', '.txt', etc.
+- The middle of the window will show the path selected for organization.
+- The copy and move buttons are for different methods of organization, this is explained below.
+- The "Organize Files" button will begin the file organization process.
 
-### 2.(Copy):
-When 2 is typed and the enter key is pressed, you will be prompted to enter a folder path. This is asking for the exact path of the folder that you wish to organize. The files will be copied to a new folder that will be created named {the name of the folder organizing}_extOrg and placed in their designated folder, leaving the original files untouched. The folder name being their extension: '.mp4', '.png', '.txt', etc.
+### Move:
+The files will be moved to a new folder that will be created named {the name of the folder organizing}_ExtOrg and placed in their designated folder. The name folder being their extension: '.mp4', '.png', '.txt', etc.
 
-### e.(Exit):
-This will exit/close the program.
+### Copy:
+The files will be copied to a new folder that will be created named {the name of the folder organizing}_ExtOrg and placed in their designated folder, leaving the original files untouched. The folder name being their extension: '.mp4', '.png', '.txt', etc.
