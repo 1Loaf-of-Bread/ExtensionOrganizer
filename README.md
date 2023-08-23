@@ -1,6 +1,8 @@
 # ExtensionOrganizer
 This program organizes all files in a folder and it's subdirs by file extension.
 
+![alt text](https://github.com/1Loaf-of-Bread/ExtensionOrganizer/blob/[branch]/image.jpg?raw=true)
+
 ## Before Running:
 Make sure to run the command 'pip install -r requirements.txt' to install all the modules needed. 
 
