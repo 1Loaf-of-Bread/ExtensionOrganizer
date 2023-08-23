@@ -1,217 +1,206 @@
-from colorama import Fore, init
-from time import sleep
+import customtkinter
+import threading
 import shutil
 import os
-init(autoreset=True)
+
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("blue")
 
 
-def getSourcePath():
-    userHelp = False
+class App(customtkinter.CTk):
+    def __init__(self):
+        super().__init__()
+
+        self.geometry("350x225")
+        self.resizable(False, False)
+        self.title("Extension Organizer v3.0.0")
+
+        self.fileOptions = customtkinter.IntVar()
+        self.failCount = 0
+        self.fileCount = 0
+        self.renameCount = 0
+        self.organizeMethod = ""
+        self.inputPath = ""
+        
+        self.fileCountLabel = customtkinter.CTkLabel(self, text=f"File {self.organizeMethod.title()} Count: {self.fileCount}")
+        self.renameCountLabel = customtkinter.CTkLabel(self, text=f"Rename Count: {self.fileCount}")
+        self.failCountLabel = customtkinter.CTkLabel(self, text=f"Fail Count: {self.fileCount}")
+        self.organizeProgressBar = customtkinter.CTkProgressBar(self, orientation=customtkinter.HORIZONTAL, mode='determinate')
+        self.completeLabel = customtkinter.CTkLabel(self, text="Organizing Complete.", font=('Helvatical bold',20))
+        self.returnButton = customtkinter.CTkButton(self, text="Return", command=self.changeWindowMain)
+
+        self.inputPathButton = customtkinter.CTkButton(self, text="Select Directory to Organize", command=self.getInputPath)
+        self.inputPathButton.pack(pady=10)
+
+        self.inputPathTextbox = customtkinter.CTkTextbox(self, width=330, height=50)
+        self.inputPathTextbox.configure(state="disabled")
+        self.inputPathTextbox.pack(pady=10)
+
+        self.copyFilesRadioButton = customtkinter.CTkRadioButton(self, text="Copy Files", variable=self.fileOptions, value=1)
+        self.copyFilesRadioButton.pack(pady=5)
+        self.moveFilesRadioButton = customtkinter.CTkRadioButton(self, text="Move Files", variable=self.fileOptions, value=2)
+        self.moveFilesRadioButton.pack(pady=5)
+
+        self.organizeFilesButton = customtkinter.CTkButton(self, text="Organize Files", command=self.initOrganizeFiles)
+        self.organizeFilesButton.pack(pady=10)
+
+
+    def getInputPath(self):
+        self.inputPath = customtkinter.filedialog.askdirectory(initialdir = "%homepath%\Desktop", title = "Select Directory to Organize")
+
+        self.inputPathTextbox.configure(state="normal")
+        self.inputPathTextbox.delete("0.0", customtkinter.END)
+        self.inputPathTextbox.insert("0.0", self.inputPath)
+        self.inputPathTextbox.configure(state="disabled")
+
+        return
     
-    while True:
-        os.system("cls")
+
+    def initOrganizeFiles(self):
+        self.checkVariables()
+        self.changeWindowOrganize()
         
-        print("~~~ Folder Path Entry ~~~")
-        print()
+        threading.Thread(target=self.organizeFiles).start()
 
-        if userHelp == True:
-            print(f"{Fore.CYAN}Example: {Fore.WHITE}C:\\Users\\computeruser1\\Desktop\\Folder to Organize")
-            print()
+        return
+    
 
-        sourcePath = input("Enter Exact Path of The Folder: ")
+    def checkVariables(self):
+        self.failCount = 0
+        self.fileCount = 0
+        self.renameCount = 0
+        totalFileCount = 0
 
+        for path, dirs, files in os.walk(self.inputPath):
+            for file in files:
+                totalFileCount += 1
         
-        if os.path.isdir(sourcePath):
-            break
-        else:
-            print()
-            print(f"{Fore.RED}ERROR!: {Fore.WHITE}The Path '{sourcePath}' Does not Exist.")
+        self.organizeProgressBar.set(0)
+        self.iterStep = 1/totalFileCount
+        self.progressIter = self.iterStep
 
-            sleep(1)
+        if self.fileOptions.get() != 1 and self.fileOptions.get() != 2 or self.inputPath == "":
+            return
 
-            userHelp = True
+        if self.fileOptions.get() == 1:
+            self.organizeMethod = "copy"
+        elif self.fileOptions.get() == 2:
+            self.organizeMethod = "move"
 
-    print()
-    print(f"{Fore.GREEN}Found Folder.")
-    sleep(1)
-    print()
+        return
+    
 
-    return sourcePath
+    def changeWindowOrganize(self):
+        self.inputPathButton.pack_forget()
+        self.inputPathTextbox.pack_forget()
+        self.copyFilesRadioButton.pack_forget()
+        self.moveFilesRadioButton.pack_forget()
+        self.organizeFilesButton.pack_forget()
 
+        self.fileCountLabel.configure(text=f"File {self.organizeMethod.title()} Count: 0")
+        self.fileCountLabel.pack(pady=5)
 
-def createExtensionFolders(sourcePath):
-    destPath = f"{os.path.basename(sourcePath)}_extOrg"
+        self.renameCountLabel.configure(text=f"Rename Count: 0")
+        self.renameCountLabel.pack(pady=5)
 
-    if not os.path.isdir(destPath):
-        os.mkdir(destPath)
+        self.failCountLabel.configure(text=f"Fail Count: 0")
+        self.failCountLabel.pack(pady=5)
 
-    for path, dir, files in os.walk(sourcePath):
-        for file in files:
-            fileExt = os.path.splitext(file)[1]
+        self.organizeProgressBar.pack(pady=5)
 
-            if not os.path.isdir(f"{destPath}\\{fileExt}"):
-                os.mkdir(f"{destPath}\\{fileExt}")
-                
-                if os.path.isdir(f"{destPath}\\{fileExt}"):
-                    print(f"{Fore.MAGENTA}Created Folder: {Fore.WHITE}{destPath}\\{fileExt}")
-                else:
-                    print(f"{Fore.RED}ERROR!: {Fore.WHITE}Failed to Create Folder \"{destPath}\\{fileExt}\"")
-                    print()
+        return
+    
 
-                    input("Press ENTER to Exit...")
-                    exit()
+    def changeWindowMain(self):
+        self.fileCountLabel.pack_forget()
+        self.renameCountLabel.pack_forget()
+        self.failCountLabel.pack_forget()
+        self.organizeProgressBar.pack_forget()
+        self.completeLabel.pack_forget()
+        self.returnButton.pack_forget()
 
-    sleep(1)
-    print()
+        self.inputPathButton.pack(pady=10)
+        self.inputPathTextbox.pack(pady=10)
+        self.copyFilesRadioButton.pack(pady=5)
+        self.moveFilesRadioButton.pack(pady=5)
+        self.organizeFilesButton.pack(pady=10)
 
-    return
+        return
+    
 
+    def organizeFiles(self):
+        extensionPath = f"{os.path.basename(self.inputPath)}_ExtOrg"
 
-def extensionOrganize(sourcePath, organize):
-    renameCount = 0
-    failCount = 0
-    fileCount = 0
+        for path, dirs, files in os.walk(self.inputPath):
+            for file in files:
+                folderExt = f"{extensionPath}\\{os.path.splitext(file)[1][1:]}"
 
-    for path, dir, files in os.walk(sourcePath):
-        for file in files:
-            fileName = os.path.splitext(file)[0]
-            fileExt = os.path.splitext(file)[1]
-            pathFile = f"{path}\\{file}"
-            folderDest = f"{os.path.basename(sourcePath)}_extOrg\\{fileExt}"
+                if not os.path.isdir(folderExt):
+                    os.makedirs(folderExt)
 
-            if file != __file__:
-                if not os.path.isfile(f"{folderDest}\\{file}"):
-                    try:
-                        if organize == "move":
-                            shutil.move(pathFile, f"{folderDest}\\{file}")
-                        else:
-                            shutil.copyfile(pathFile, f"{folderDest}\\{file}")
-                    except:
-                        pass
-                
-                    if os.path.isfile(f"{folderDest}\\{file}"):
-                        fileCount += 1
+        for path, dirs, files in os.walk(self.inputPath):
+            for file in files:
+                fileName = os.path.splitext(file)[0]
+                fileExt = os.path.splitext(file)[1]
+                folderExt = fileExt[1:]
 
-                        if organize == "move":
-                            print(f"{Fore.GREEN}Moved File: {Fore.WHITE}{file}")
-                        else:
-                            print(f"{Fore.GREEN}Copied File: {Fore.WHITE}{file}")
+                if os.path.isfile(f"{extensionPath}\\{folderExt}\\{file}"):
+                    self.renameCount += 1
 
-                        print(f"    {Fore.GREEN}To: {Fore.WHITE}{folderDest}")
-                    else:
-                        failCount += 1
-
-                        if organize == "move":
-                            print(f"{Fore.RED}Failed to Move File: {Fore.WHITE}{file}")
-                        else:
-                            print(f"{Fore.RED}Failed to Copy File: {Fore.WHITE}{file}")
-                else:
-                    renameCount += 1
-
-                    fileRename = f"ren{renameCount}_{fileName}{fileExt}"
-
-                    try:
-                        if organize == "move":
-                            shutil.move(pathFile, fileRename)
-                        else:
-                            shutil.copyfile(pathFile, fileRename)
-                    except:
-                        pass
-
-                    if os.path.isfile(fileRename):
-                        print(f"{Fore.YELLOW}Renamed File: {Fore.WHITE}{file}")
-                        print(f"    {Fore.YELLOW}To: {Fore.WHITE}{fileRename}")
-
+                    if self.organizeMethod == "copy":
                         try:
-                            shutil.move(fileRename, f"{folderDest}\\{fileRename}")
+                            shutil.copyfile(f"{path}\\{file}", f"{extensionPath}\\{folderExt}\\ren{self.renameCount}_{file}")
+                        except:
+                            pass
+                    else:
+                        try:
+                            shutil.move(f"{path}\\{file}", f"{extensionPath}\\{folderExt}\\ren{self.renameCount}_{file}")
                         except:
                             pass
 
-                        if os.path.isfile(f"{folderDest}\\{fileRename}"):
-                            fileCount += 1
+                    if os.path.isfile(f"{extensionPath}\\{folderExt}\\ren{self.renameCount}_{file}"):
+                        self.fileCount += 1
 
-                            if organize == "move":
-                                print(f"{Fore.GREEN}Moved File: {Fore.WHITE}{fileRename}")
-                            else:
-                                print(f"{Fore.GREEN}Copied File: {Fore.WHITE}{fileRename}")
-
-                            print(f"    {Fore.GREEN}To: {Fore.WHITE}{folderDest}")
-                        else:
-                            failCount += 1
-
-                            if organize == "move":
-                                print(f"{Fore.RED}Failed to Move File: {Fore.WHITE}{fileRename}")
-                            else:
-                                print(f"{Fore.RED}Failed to Copy File: {Fore.WHITE}{fileRename}")
-
-                            os.rename(fileRename, pathFile)
-
-                            renameCount -= 1
-
-                            print(f"    {Fore.MAGENTA}Reverted Changes Made to File.")
+                        self.fileCountLabel.configure(text=f"File {self.organizeMethod.title()} Count: {self.fileCount}")
+                        self.renameCountLabel.configure(text=f"Rename Count: {self.renameCount}")
                     else:
-                        failCount += 1
-                        
-                        print(f"{Fore.RED}Failed to Rename File: {Fore.WHITE}{pathFile}")
+                        self.failCount += 1
+                        self.renameCount -= 1
 
-    return failCount, fileCount, renameCount
+                        self.failCountLabel.configure(text=f"Fail Count: {self.failCount}")
+                    
+                else:
+                    if self.organizeMethod == "copy":
+                        try:
+                            shutil.copyfile(f"{path}\\{file}", f"{extensionPath}\\{folderExt}\\{file}")
+                        except:
+                            pass
+                    else:
+                        try:
+                            shutil.move(f"{path}\\{file}", f"{extensionPath}\\{folderExt}\\{file}")
+                        except:
+                            pass
+
+                    if os.path.isfile(f"{extensionPath}\\{folderExt}\\{file}"):
+                        self.fileCount += 1
+
+                        self.fileCountLabel.configure(text=f"File {self.organizeMethod.title()} Count: {self.fileCount}")
+                    else:
+                        self.failCount += 1
+
+                        self.failCountLabel.configure(text=f"Fail Count: {self.failCount}")
+
+                self.progressIter += self.iterStep
+                self.organizeProgressBar.set(self.progressIter)
+
+                self.update_idletasks()
+
+        self.completeLabel.pack(pady=10)
+        self.returnButton.pack(pady=10)
+
+        return
 
 
 if __name__ == "__main__":
-    while True:
-        os.system("cls")
-
-        print("~~~~~~~~ Main Menu ~~~~~~~~")
-        print("|                         |")
-        print("|    1. Move Files        |")
-        print("|    2. Copy Files        |")
-        print("|                         |")
-        print("|    e. Exit              |")
-        print("|                         |")
-        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-        print()
-        
-        choice = input("--> ")
-
-        if choice != "1" and choice != "2" and choice != "e":
-            print()
-            print(f"{Fore.RED}ERROR!: {Fore.WHITE}Please enter either 1, 2 or e.")
-            sleep(1)
-        else:
-            if choice == "e":
-                exit()
-
-            sourcePath = getSourcePath()
-
-            createExtensionFolders(sourcePath)
-
-            if choice == "1":
-                failCount, fileCount, renameCount = extensionOrganize(sourcePath, "move")
-
-                print()
-                print()
-                print("~~~ Folder Orginization Complete ~~~")
-                print("|                                  |")
-                print(f"|     Files Moved: {fileCount}")
-                print(f"|     Failed File Moves: {failCount}")
-                print(f"|     Files Renamed: {renameCount}")
-                print("|                                  |")
-                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                print()
-
-                input("Press ENTER to Continue...")
-            else:
-                failCount, fileCount, renameCount = extensionOrganize(sourcePath, "copy")
-
-                print()
-                print()
-                print("~~~ Folder Orginization Complete ~~~")
-                print("|                                  |")
-                print(f"|     Files Copied: {fileCount}")
-                print(f"|     Failed File Copies: {failCount}")
-                print(f"|     Files Renamed: {renameCount}")
-                print("|                                  |")
-                print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-                print()
-
-                input("Press ENTER to Continue...")
+    app = App()
+    app.mainloop()
