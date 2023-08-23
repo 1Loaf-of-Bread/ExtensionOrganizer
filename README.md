@@ -1,5 +1,5 @@
 # ExtensionOrganizer
-This program organizes a folder and it's subdirs by file extension. 
+This program organizes all files in a folder and it's subdirs by file extension.
 
 ## Before Running:
 Make sure to run the command 'pip install -r requirements.txt' to install all the modules needed. 
